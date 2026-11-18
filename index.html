@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digestive Physiology: Final 100</title>
+    <style>
+        :root {
+            --primary: #2980b9;
+            --secondary: #3498db;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --bg-color: #f4f6f7; 
+            --text-color: #2c3e50;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at top right, #e8f8f5, transparent 400px),
+                              radial-gradient(circle at bottom left, #ebf5fb, transparent 400px);
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 850px;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            position: relative;
+            border-top: 8px solid var(--primary);
+        }
+
+        h1 { text-align: center; color: var(--primary); margin-top: 0; font-size: 2.2rem; margin-bottom: 25px; }
+        
+        #score-tracker {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-left: 6px solid var(--primary);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        #question-text { font-size: 1.3rem; line-height: 1.5; margin-bottom: 25px; font-weight: 600; color: #2c3e50; }
+        .options-grid { display: flex; flex-direction: column; gap: 12px; }
+        
+        button.option-btn {
+            background: white; border: 2px solid #bdc3c7; color: var(--text-color);
+            padding: 18px; border-radius: 10px; font-size: 1.1rem; cursor: pointer;
+            text-align: left; transition: all 0.2s; font-weight: 500;
+        }
+        button.option-btn:hover:not(:disabled) { background-color: #ebf5fb; border-color: var(--primary); transform: translateX(5px); }
+        button.option-btn.correct { background-color: #d5f5e3 !important; border-color: var(--success) !important; color: #145a32 !important; }
+        button.option-btn.wrong { background-color: #fadbd8 !important; border-color: var(--danger) !important; color: #7b241c !important; }
+        button.option-btn:disabled { cursor: not-allowed; opacity: 0.9; transform: none; }
+
+        /* Free Response Area */
+        .fr-area { display: flex; flex-direction: column; gap: 15px; }
+        input[type="text"] {
+            width: 100%; padding: 15px; font-size: 1.1rem; border: 2px solid #bdc3c7;
+            border-radius: 8px; box-sizing: border-box; transition: border-color 0.2s;
+        }
+        input[type="text"]:focus { outline: none; border-color: var(--primary); }
+        .self-grade-container { display: flex; gap: 10px; margin-top: 15px; }
+
+        #feedback-area {
+            margin-top: 30px; padding: 25px; border-radius: 10px; display: none;
+            line-height: 1.6; font-size: 1.1rem; font-weight: 500;
+        }
+        #feedback-area.show-correct { display: block; background-color: #d5f5e3; border-left: 6px solid var(--success); color: #145a32; }
+        #feedback-area.show-wrong { display: block; background-color: #fadbd8; border-left: 6px solid var(--danger); color: #7b241c; }
+        #feedback-area.show-neutral { display: block; background-color: #ebf5fb; border-left: 6px solid var(--secondary); color: #154360; }
+
+        .btn-primary {
+            background: var(--primary); color: white; border: none; padding: 18px 30px;
+            border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer;
+            display: block; width: 100%; margin-top: 25px; transition: background 0.2s;
+        }
+        .btn-primary:hover { background: #2471a3; }
+        
+        .btn-success { background: var(--success); }
+        .btn-success:hover { background: #1e8449; }
+        .btn-danger { background: var(--danger); }
+        .btn-danger:hover { background: #922b21; }
+
+        #next-btn { display: none; background: #27ae60; margin-top: 30px;}
+        #next-btn:hover { background: #1e8449; }
+        #end-btn { background: transparent; border: none; color: #7f8c8d; text-decoration: underline; cursor: pointer; font-size: 1.1rem; width: auto; margin: 25px auto 0 auto; display: block;}
+        #end-btn:hover { color: var(--danger); }
+
+        .hidden { display: none !important; }
+
+        #screen-results { text-align: center; }
+        .result-score { font-size: 4rem; color: var(--primary); font-weight: bold; margin: 20px 0; }
+
+        /* Joke Milestone Modal */
+        #milestone-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #milestone-overlay.active { opacity: 1; pointer-events: auto; }
+        .milestone-card {
+            background: linear-gradient(135deg, #f39c12, #d35400);
+            padding: 40px; border-radius: 25px; text-align: center; color: white;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6); transform: scale(0.5);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 550px; border: 4px solid white;
+        }
+        #milestone-overlay.active .milestone-card { transform: scale(1); }
+        .milestone-icon {
+            font-size: 6rem; margin-bottom: 10px; display: inline-block;
+            animation: bounce 2s infinite ease-in-out;
+        }
+        .milestone-card h1 { color: #ffffff; font-size: 2.2rem; margin-top: 0; margin-bottom: 20px; text-transform: uppercase; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);}
+        .milestone-card p { font-size: 1.3rem; line-height: 1.6; margin: 10px 0; }
+        .btn-continue {
+            background: white; color: #d35400; border: none; padding: 15px 30px;
+            border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer;
+            margin-top: 25px; transition: transform 0.2s;
+        }
+        .btn-continue:hover { transform: scale(1.05); }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Joke Milestone Overlay -->
+    <div id="milestone-overlay">
+        <div class="milestone-card">
+            <div class="milestone-icon" id="milestone-icon">😂</div>
+            <h1 id="milestone-title">Joke Break!</h1>
+            <p id="milestone-q" style="font-weight: bold; font-style: italic;"></p>
+            <p id="milestone-a" style="font-size: 1.5rem; font-weight: 800; color: #fff8e7;"></p>
+            <button class="btn-continue" onclick="closeMilestone()">Back to the Game!</button>
+        </div>
+    </div>
+
+    <div id="score-tracker" class="hidden">
+        <div>Score: <span id="s-val">0</span></div>
+        <div style="font-size: 0.9rem; color: #7f8c8d;">Q: <span id="q-counter">1</span> / <span id="q-total">100</span></div>
+    </div>
+
+    <div class="container">
+        
+        <!-- SCREEN 1: START -->
+        <div id="screen-start">
+            <h1>Digestive Physiology: The Final 100</h1>
+            <p style="text-align: center; font-size: 1.2rem; line-height: 1.5; margin-bottom: 30px;">
+                This test covers every single item from the GI Hormones and Nutrient Absorption tables.
+            </p>
+            <button class="btn-primary" onclick="startGame()">Start Test</button>
+        </div>
+
+        <!-- SCREEN 2: GAMEPLAY -->
+        <div id="screen-game" class="hidden">
+            <div id="question-text">Loading question...</div>
+            
+            <div id="options-container" class="options-grid"></div>
+
+            <div id="fr-container" class="fr-area hidden">
+                <input type="text" id="fr-input" placeholder="Type your answer here..." autocomplete="off">
+                <button class="btn-primary" id="fr-submit" onclick="showFRRubric()">Check Answer</button>
+            </div>
+
+            <div id="feedback-area">
+                <div id="feedback-title" style="font-weight: bold; margin-bottom: 10px; font-size: 1.2rem;"></div>
+                <div id="feedback-text"></div>
+
+                <div id="self-grade-box" class="hidden">
+                    <p style="margin-top: 15px; font-weight: bold;">Did you get this correct?</p>
+                    <div class="self-grade-container">
+                        <button class="btn-primary btn-success" style="margin-top:0;" onclick="selfGrade(true)">Yes, Correct (+1)</button>
+                        <button class="btn-primary btn-danger" style="margin-top:0;" onclick="selfGrade(false)">No, Incorrect (0)</button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-primary" id="next-btn" onclick="nextQuestion()">Next Question &rarr;</button>
+            <button id="end-btn" onclick="showResults()">End Test & View Score</button>
+        </div>
+
+        <!-- SCREEN 3: RESULTS -->
+        <div id="screen-results" class="hidden">
+            <h1>Test Complete!</h1>
+            <div class="result-score" id="final-score-display">0%</div>
+            <p id="final-message" style="font-size: 1.2rem; margin-bottom: 30px;"></p>
+            <button class="btn-primary" onclick="location.reload()">Take Test Again</button>
+        </div>
+    </div>
+
+<script>
+    const questionsDb = [
+        // ---------- GASTIN (10 Questions) ----------
+        { type: "MCQ", q: "Which hormone is produced by G cells?", opts: ["Secretin", "CCK", "Gastrin", "Motilin"], a: 2, exp: "Gastrin is produced by G cells in the stomach antrum.[cite: 84]" },
+        { type: "FR", q: "Where are the G cells that produce Gastrin located?", aText: "Stomach antrum", exp: "G cells are located in the stomach antrum.[cite: 84]" },
+        { type: "MCQ", q: "What stimulates the release of Gastrin?", opts: ["Food in stomach; stomach distension; vagus nerve", "Acid chyme entering duodenum", "Fat and protein in duodenum", "Fasting state / alkaline pH"], a: 0, exp: "Gastrin is stimulated by food in the stomach, stomach distension, and the vagus nerve.[cite: 84]" },
+        { type: "MCQ", q: "Which of the following is an effect of Gastrin?", opts: ["Decreases HCl secretion", "Increases HCl secretion and gastric motility", "Increases pancreatic bicarbonate secretion", "Gallbladder contraction"], a: 1, exp: "Gastrin increases HCl secretion and gastric motility, and stimulates the growth of gastric mucosa.[cite: 84]" },
+        { type: "FR", q: "Which hormone stimulates the growth of the gastric mucosa?", aText: "Gastrin", exp: "Gastrin stimulates the growth of gastric mucosa.[cite: 84]" },
+        { type: "MCQ", q: "A patient presents with a tumor causing hypersecretion of G cells. What effect will this have?", opts: ["Excessive HCl secretion", "Excessive bile production", "Inhibition of gastric motility", "Decreased insulin release"], a: 0, exp: "Since G cells secrete Gastrin, hypersecretion would lead to excessive HCl secretion.[cite: 84]" },
+        { type: "MCQ", q: "Which nerve stimulates the release of Gastrin?", opts: ["Glossopharyngeal nerve", "Vagus nerve", "Phrenic nerve", "Sciatic nerve"], a: 1, exp: "The vagus nerve stimulates Gastrin release.[cite: 84]" },
+        { type: "MCQ", q: "If the stomach is heavily distended after a large meal, which hormone is immediately released from the antrum?", opts: ["Motilin", "Secretin", "Gastrin", "GIP"], a: 2, exp: "Stomach distension stimulates Gastrin release from the antrum.[cite: 84]" },
+        { type: "FR", q: "Does Gastrin increase or decrease gastric motility?", aText: "Increase", exp: "Gastrin increases (↑) gastric motility.[cite: 84]" },
+        { type: "MCQ", q: "Which of the following is NOT a stimulus for Gastrin?", opts: ["Vagus nerve", "Stomach distension", "Food in stomach", "Acid chyme in duodenum"], a: 3, exp: "Acid chyme in the duodenum stimulates Secretin, not Gastrin.[cite: 84]" },
+
+        // ---------- SECRETIN (10 Questions) ----------
+        { type: "MCQ", q: "Which hormone is produced by S cells?", opts: ["Gastrin", "Secretin", "CCK", "GIP"], a: 1, exp: "Secretin is produced by S cells.[cite: 84]" },
+        { type: "FR", q: "Where are the S cells that produce Secretin located?", aText: "Duodenum", exp: "S cells are located in the duodenum.[cite: 84]" },
+        { type: "MCQ", q: "What stimulates the release of Secretin?", opts: ["Acid chyme (low pH) entering the duodenum", "Fat and carbs in the duodenum", "Fasting state", "Vagus nerve"], a: 0, exp: "Secretin is stimulated by acid chyme (low pH) entering the duodenum.[cite: 84]" },
+        { type: "MCQ", q: "What is the primary effect of Secretin on the pancreas?", opts: ["Increases enzyme secretion", "Increases bicarbonate secretion", "Decreases bicarbonate secretion", "Releases insulin"], a: 1, exp: "Secretin increases pancreatic bicarbonate secretion.[cite: 84]" },
+        { type: "MCQ", q: "How does Secretin affect gastric motility and secretion?", opts: ["It increases them", "It decreases them", "It has no effect", "It triggers the migrating motor complex"], a: 1, exp: "Secretin decreases (↓) gastric motility and secretion.[cite: 84]" },
+        { type: "FR", q: "Does Secretin increase or decrease bile production?", aText: "Increase", exp: "Secretin increases (↑) bile production.[cite: 84]" },
+        { type: "MCQ", q: "If the pH of chyme entering the small intestine is dangerously low, which hormone acts to neutralize it by triggering bicarbonate?", opts: ["Secretin", "Motilin", "Gastrin", "CCK"], a: 0, exp: "Secretin responds to low pH by triggering pancreatic bicarbonate secretion.[cite: 84]" },
+        { type: "MCQ", q: "Which of the following accurately describes the source and stimulus of Secretin?", opts: ["S cells; Fasting state", "S cells; Acid chyme entering duodenum", "I cells; Fat and protein", "G cells; Stomach distension"], a: 1, exp: "Secretin comes from S cells in the duodenum and is stimulated by acid chyme.[cite: 84]" },
+        { type: "MCQ", q: "Which two hormones act to DECREASE gastric motility?", opts: ["Gastrin and Motilin", "Secretin and CCK", "CCK and GIP", "Secretin and GIP"], a: 3, exp: "Secretin and GIP both decrease gastric motility (CCK decreases gastric emptying).[cite: 84]" },
+        { type: "FR", q: "Name the specific hormone released by the duodenum in response to a low pH environment.", aText: "Secretin", exp: "Secretin is released in response to acid chyme (low pH).[cite: 84]" },
+
+        // ---------- CCK (10 Questions) ----------
+        { type: "MCQ", q: "Which hormone is produced by I cells?", opts: ["Secretin", "CCK (Cholecystokinin)", "GIP", "Motilin"], a: 1, exp: "CCK is produced by I cells.[cite: 84]" },
+        { type: "FR", q: "Where are the I cells that produce CCK located?", aText: "Duodenum/jejunum", exp: "I cells are located in the duodenum and jejunum.[cite: 84]" },
+        { type: "MCQ", q: "What stimulates the release of CCK?", opts: ["Acid chyme", "Fat and protein in the duodenum", "Fasting state", "Fat and carbs in the duodenum"], a: 1, exp: "CCK is stimulated by fat and protein in the duodenum.[cite: 84]" },
+        { type: "MCQ", q: "What effect does CCK have on the gallbladder?", opts: ["Gallbladder relaxation", "Gallbladder contraction", "No effect", "Bile synthesis"], a: 1, exp: "CCK causes gallbladder contraction to release bile.[cite: 84]" },
+        { type: "MCQ", q: "What effect does CCK have on the pancreas?", opts: ["Increases bicarbonate secretion", "Decreases enzyme secretion", "Increases enzyme secretion", "Triggers insulin release"], a: 2, exp: "CCK increases pancreatic enzyme secretion.[cite: 84]" },
+        { type: "FR", q: "Which hormone is directly responsible for signaling satiety (fullness) to the brain?", aText: "CCK (Cholecystokinin)", exp: "CCK induces satiety.[cite: 84]" },
+        { type: "MCQ", q: "How does CCK affect the stomach?", opts: ["Increases gastric emptying", "Decreases gastric emptying", "Increases HCl secretion", "Increases gastric motility"], a: 1, exp: "CCK decreases (↓) gastric emptying.[cite: 84]" },
+        { type: "MCQ", q: "If a patient eats a meal heavily loaded with fats and proteins, which hormone will be secreted by the I cells in response?", opts: ["GIP", "Secretin", "Gastrin", "CCK"], a: 3, exp: "CCK responds to fat and protein in the duodenum.[cite: 84]" },
+        { type: "MCQ", q: "Which hormone stimulates pancreatic enzyme secretion and gallbladder contraction simultaneously?", opts: ["Secretin", "CCK", "Motilin", "Gastrin"], a: 1, exp: "CCK is responsible for both of these effects.[cite: 84]" },
+        { type: "FR", q: "Name the two macronutrients that trigger the release of Cholecystokinin (CCK).", aText: "Fat and protein", exp: "Fat and protein in the duodenum trigger CCK.[cite: 84]" },
+
+        // ---------- GIP (10 Questions) ----------
+        { type: "MCQ", q: "Which hormone is produced by K cells?", opts: ["Gastrin", "Secretin", "GIP (Gastric Inhibitory Peptide)", "CCK"], a: 2, exp: "GIP is produced by K cells.[cite: 84]" },
+        { type: "FR", q: "Where are the K cells that produce GIP located?", aText: "Duodenum/jejunum", exp: "K cells are located in the duodenum and jejunum.[cite: 84]" },
+        { type: "MCQ", q: "What stimulates the release of GIP?", opts: ["Fat and protein", "Fat and carbs in the duodenum", "Acid chyme", "Stomach distension"], a: 1, exp: "GIP is stimulated by fat and carbs in the duodenum.[cite: 84]" },
+        { type: "MCQ", q: "What is the primary endocrine effect of GIP?", opts: ["Increases glucagon release", "Decreases insulin release", "Increases insulin release (incretin effect)", "Increases cortisol release"], a: 2, exp: "GIP increases insulin release, which is known as the incretin effect.[cite: 84]" },
+        { type: "MCQ", q: "What effect does GIP have on the stomach?", opts: ["Increases gastric acid and motility", "Decreases gastric acid and motility", "Increases gastric emptying", "Causes mucosal growth"], a: 1, exp: "GIP decreases (↓) gastric acid and motility.[cite: 84]" },
+        { type: "FR", q: "The ability of oral glucose to stimulate greater insulin release than intravenous glucose is mediated by GIP. What is this effect called?", aText: "Incretin effect", exp: "GIP causes the incretin effect (increased insulin release).[cite: 84]" },
+        { type: "MCQ", q: "While CCK is triggered by fat and protein, GIP is triggered by fat and which other macronutrient?", opts: ["Nucleic acids", "Protein", "Carbs", "Alcohol"], a: 2, exp: "GIP is stimulated by fat and carbs.[cite: 84]" },
+        { type: "MCQ", q: "Which two hormones are secreted by cells located in BOTH the duodenum and jejunum?", opts: ["Gastrin and Secretin", "Secretin and Motilin", "CCK and GIP", "Gastrin and Motilin"], a: 2, exp: "Both CCK (I cells) and GIP (K cells) are located in the duodenum/jejunum.[cite: 84]" },
+        { type: "MCQ", q: "Which hormone's name literally stands for Gastric Inhibitory Peptide?", opts: ["CCK", "GIP", "Secretin", "Motilin"], a: 1, exp: "GIP stands for Gastric Inhibitory Peptide.[cite: 84]" },
+        { type: "FR", q: "Which specific cells secrete GIP?", aText: "K cells", exp: "K cells secrete GIP.[cite: 84]" },
+
+        // ---------- MOTILIN (10 Questions) ----------
+        { type: "MCQ", q: "Which hormone is produced by Mo cells?", opts: ["Motilin", "Secretin", "Gastrin", "GIP"], a: 0, exp: "Motilin is produced by Mo cells.[cite: 84]" },
+        { type: "FR", q: "Where are the Mo cells that produce Motilin located?", aText: "Small intestine", exp: "Mo cells are located throughout the small intestine.[cite: 84]" },
+        { type: "MCQ", q: "What stimulates the release of Motilin?", opts: ["Food in stomach", "Acid chyme", "Fasting state / alkaline pH", "Fat and protein"], a: 2, exp: "Motilin is stimulated by the fasting state or an alkaline pH.[cite: 84]" },
+        { type: "MCQ", q: "What is the primary effect of Motilin?", opts: ["Gallbladder contraction", "Triggers migrating motor complex (MMC)", "Increases insulin release", "Decreases gastric motility"], a: 1, exp: "Motilin triggers the migrating motor complex (MMC).[cite: 84]" },
+        { type: "FR", q: "The contractions triggered by Motilin to sweep the GI tract clear during fasting are known as what kind of contractions?", aText: "Housekeeping contractions", exp: "Motilin triggers MMC, also known as housekeeping contractions.[cite: 84]" },
+        { type: "MCQ", q: "During which digestive state is Motilin primarily active?", opts: ["Immediately after a meal", "During the fasting state", "Only during sleep", "When acid is high in the stomach"], a: 1, exp: "Motilin is stimulated by the fasting state.[cite: 84]" },
+        { type: "MCQ", q: "Which hormone is stimulated by an alkaline pH?", opts: ["Secretin", "Gastrin", "Motilin", "CCK"], a: 2, exp: "Motilin is stimulated by an alkaline pH (whereas Secretin is stimulated by an acidic pH).[cite: 84]" },
+        { type: "MCQ", q: "The Migrating Motor Complex (MMC) is initiated by which hormone?", opts: ["GIP", "Secretin", "CCK", "Motilin"], a: 3, exp: "Motilin triggers the MMC.[cite: 84]" },
+        { type: "FR", q: "What does the abbreviation MMC stand for in the context of Motilin's effects?", aText: "Migrating motor complex", exp: "MMC stands for migrating motor complex.[cite: 84]" },
+        { type: "MCQ", q: "Which cell type and location correctly pairs with Motilin?", opts: ["S cells (duodenum)", "Mo cells (small intestine)", "G cells (stomach antrum)", "I cells (duodenum/jejunum)"], a: 1, exp: "Motilin is produced by Mo cells in the small intestine.[cite: 84]" },
+
+        // ---------- CARBOHYDRATES & PROTEINS (15 Questions) ----------
+        { type: "MCQ", q: "What is the final digestive form of carbohydrates before absorption?", opts: ["Disaccharides", "Polysaccharides", "Monosaccharides (glucose, fructose, galactose)", "Oligosaccharides"], a: 2, exp: "Carbohydrates are absorbed as monosaccharides (glucose, fructose, galactose).[cite: 85, 86]" },
+        { type: "FR", q: "Name the three specific monosaccharides absorbed in the small intestine.", aText: "Glucose, fructose, galactose", exp: "The final forms are glucose, fructose, and galactose.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the absorption mechanism for glucose and galactose?", opts: ["Simple diffusion", "Facilitated diffusion via GLUT5", "Active transport via SGLT1", "Receptor-mediated endocytosis"], a: 2, exp: "Glucose and galactose use active transport via SGLT1.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the absorption mechanism for fructose?", opts: ["Active transport via SGLT1", "Facilitated diffusion via GLUT5", "Passive diffusion", "Osmosis"], a: 1, exp: "Fructose uses facilitated diffusion via GLUT5.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the route to the blood/lymph for carbohydrates?", opts: ["Lacteals → lymph", "Capillaries → portal vein → liver", "Capillaries → renal vein", "Thoracic duct"], a: 1, exp: "Carbohydrates enter capillaries, travel through the portal vein, and go to the liver.[cite: 85, 86]" },
+        { type: "FR", q: "Which specific transporter is responsible for the active transport of glucose and galactose?", aText: "SGLT1", exp: "SGLT1 is used for glucose and galactose.[cite: 85, 86]" },
+        { type: "MCQ", q: "What are the final digestive forms of proteins?", opts: ["Polypeptides", "Amino acids + small peptides (di/tripeptides)", "Free amines", "Nucleic acids"], a: 1, exp: "Proteins are broken into amino acids and small peptides (di/tripeptides).[cite: 85, 86]" },
+        { type: "MCQ", q: "What mechanism is used to absorb small peptides (di/tripeptides)?", opts: ["Active transport via PepT1", "Passive diffusion", "Facilitated diffusion via GLUT5", "Endocytosis"], a: 0, exp: "Small peptides use active transport via PepT1.[cite: 85, 86]" },
+        { type: "FR", q: "What is the route to the blood for absorbed amino acids?", aText: "Capillaries to portal vein to liver", exp: "Proteins follow the same route as carbs: Capillaries → portal vein → liver.[cite: 85, 86]" },
+        { type: "MCQ", q: "Which transporter actively absorbs dipeptides and tripeptides into enterocytes?", opts: ["SGLT1", "GLUT5", "PepT1", "DMT1"], a: 2, exp: "PepT1 transports small peptides.[cite: 85, 86]" },
+        { type: "MCQ", q: "How are individual amino acids absorbed?", opts: ["Simple diffusion", "Active transport via multiple AA transporters", "Endocytosis", "Osmosis"], a: 1, exp: "Amino acids use active transport via multiple AA transporters.[cite: 85, 86]" },
+        { type: "MCQ", q: "Which two macronutrients share the exact same route to the blood (Capillaries → portal vein → liver)?", opts: ["Proteins and Long-chain fats", "Carbohydrates and Proteins", "Long-chain fats and Short-chain fats", "Fat-soluble vitamins and Water-soluble vitamins"], a: 1, exp: "Both carbs and proteins travel via capillaries to the portal vein to the liver.[cite: 85, 86]" },
+        { type: "FR", q: "Fructose is absorbed via facilitated diffusion using which transporter?", aText: "GLUT5", exp: "Fructose uses GLUT5.[cite: 85, 86]" },
+        { type: "MCQ", q: "Which statement about carbohydrate absorption is TRUE?", opts: ["All monosaccharides use SGLT1", "Fructose uses active transport", "Glucose uses SGLT1 via active transport", "Galactose uses simple diffusion"], a: 2, exp: "Glucose and galactose use SGLT1 (active), while fructose uses GLUT5 (facilitated).[cite: 85, 86]" },
+        { type: "MCQ", q: "Protein digestion results in amino acids and what other small molecules that can be directly absorbed?", opts: ["Polypeptides", "Monoglycerides", "Di/tripeptides", "Micelles"], a: 2, exp: "Di/tripeptides are directly absorbed via PepT1.[cite: 85, 86]" },
+
+        // ---------- FATS & VITAMINS (20 Questions) ----------
+        { type: "MCQ", q: "What is the final digestive form of long-chain fats?", opts: ["Fatty acids + glycerol", "Fatty acids + monoglycerides", "Triglycerides", "Micelles"], a: 1, exp: "Long-chain fats are broken into fatty acids and monoglycerides.[cite: 85, 86]" },
+        { type: "MCQ", q: "How do long-chain fatty acids initially enter the enterocytes?", opts: ["Active transport", "Receptor-mediated endocytosis", "Passive diffusion", "Facilitated diffusion"], a: 2, exp: "They enter enterocytes via passive diffusion.[cite: 85, 86]" },
+        { type: "FR", q: "Once inside the enterocyte, long-chain fatty acids re-form into triglycerides and are packaged into what structures?", aText: "Chylomicrons", exp: "They are packaged into chylomicrons for transport.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the full absorption route for long-chain fats?", opts: ["Capillaries → portal vein → liver", "Lacteals → lymph → thoracic duct → subclavian vein", "Capillaries → lymph → liver", "Lacteals → portal vein → subclavian vein"], a: 1, exp: "Route: Lacteals → lymph → thoracic duct → subclavian vein.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the final digestive form of short/medium chain fats?", opts: ["Fatty acids + monoglycerides", "Fatty acids + glycerol", "Chylomicrons", "Micelles"], a: 1, exp: "Short/medium chain fats are broken into fatty acids and glycerol.[cite: 85, 86]" },
+        { type: "MCQ", q: "How are short/medium chain fats absorbed into the enterocytes?", opts: ["Active transport", "Simple diffusion", "Endocytosis", "Facilitated diffusion"], a: 1, exp: "They are absorbed via simple diffusion.[cite: 85, 86]" },
+        { type: "FR", q: "What is the route to the blood for short/medium chain fats?", aText: "Capillaries to portal vein", exp: "Unlike long-chain fats, they go directly into capillaries → portal vein.[cite: 85, 86]" },
+        { type: "MCQ", q: "Which vitamins are fat-soluble?", opts: ["Vitamins B, C", "Vitamins A, D, E, K", "Vitamin B12 only", "All vitamins"], a: 1, exp: "Vitamins A, D, E, and K are fat-soluble.[cite: 85, 86]" },
+        { type: "MCQ", q: "How are fat-soluble vitamins (A, D, E, K) absorbed?", opts: ["Active transport via PepT1", "Receptor-mediated endocytosis", "Passive diffusion with dietary fat in micelles", "Osmosis"], a: 2, exp: "They are absorbed with dietary fat in micelles via passive diffusion.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the route to the blood/lymph for fat-soluble vitamins?", opts: ["Capillaries → portal vein", "Lacteals → lymph", "Directly to the liver", "Via the renal vein"], a: 1, exp: "They travel via lacteals → lymph (same route as long-chain fats).[cite: 85, 86]" },
+        { type: "FR", q: "Which category of vitamins includes Vitamins B and C?", aText: "Water-soluble vitamins", exp: "Vitamins B and C are water-soluble.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the final digestive form of water-soluble vitamins (B, C)?", opts: ["Bound to intrinsic factor", "Packaged in micelles", "Free vitamins", "Bound to proteins"], a: 2, exp: "They exist as free vitamins.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the absorption mechanism for water-soluble vitamins?", opts: ["Always simple diffusion", "Always active transport", "Active transport or diffusion depending on vitamin", "Endocytosis"], a: 2, exp: "It is active transport or diffusion depending on the specific vitamin.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the route to the blood for water-soluble vitamins?", opts: ["Lacteals → lymph", "Capillaries → portal vein", "Capillaries → lymphatic duct", "Portal vein → lacteals"], a: 1, exp: "They travel via capillaries to the portal vein.[cite: 85, 86]" },
+        { type: "MCQ", q: "Which specific nutrient must be bound to intrinsic factor for absorption?", opts: ["Iron", "Calcium", "Vitamin B12", "Vitamin C"], a: 2, exp: "Vitamin B12 must be bound to intrinsic factor (from the stomach).[cite: 85, 86]" },
+        { type: "FR", q: "Where does the intrinsic factor required for Vitamin B12 absorption come from?", aText: "Stomach", exp: "Intrinsic factor is produced in the stomach.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the specific absorption mechanism for Vitamin B12?", opts: ["Passive diffusion", "Active transport via SGLT1", "Receptor-mediated endocytosis (ileum only)", "Simple diffusion"], a: 2, exp: "It is absorbed via receptor-mediated endocytosis specifically in the ileum.[cite: 85, 86]" },
+        { type: "MCQ", q: "In which specific part of the small intestine is Vitamin B12 absorbed?", opts: ["Duodenum", "Jejunum", "Ileum", "Cecum"], a: 2, exp: "It is absorbed in the ileum only.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the route to the blood for Vitamin B12?", opts: ["Lacteals → lymph", "Capillaries → portal vein", "Thoracic duct", "Jugular vein"], a: 1, exp: "It travels via capillaries to the portal vein.[cite: 85, 86]" },
+        { type: "MCQ", q: "Which of the following describes the difference in route between long-chain and short-chain fats?", opts: ["Long-chain use capillaries; short-chain use lacteals", "Long-chain use lacteals; short-chain use capillaries", "Both use lacteals", "Both use capillaries"], a: 1, exp: "Long-chain fats enter lacteals (lymph), while short/medium chain fats enter capillaries (blood).[cite: 85, 86]" },
+
+        // ---------- IRON, CALCIUM, WATER (15 Questions) ----------
+        { type: "MCQ", q: "What is the final digestive form of Iron that is absorbed?", opts: ["Ferric iron (Fe3+)", "Reduced iron (ferrous Fe2+)", "Bound to hemoglobin", "Bound to intrinsic factor"], a: 1, exp: "Iron must be reduced to its ferrous (Fe2+) state for absorption.[cite: 85, 86]" },
+        { type: "FR", q: "What is the specific chemical symbol and charge for reduced iron?", aText: "Fe2+", exp: "It is absorbed as ferrous Fe2+.[cite: 85, 86]" },
+        { type: "MCQ", q: "Which transporter actively absorbs reduced iron (Fe2+)?", opts: ["SGLT1", "GLUT5", "DMT1", "PepT1"], a: 2, exp: "Iron is absorbed via active transport using DMT1.[cite: 85, 86]" },
+        { type: "FR", q: "Iron absorption via DMT1 is regulated by which hormone?", aText: "Hepcidin", exp: "Hepcidin regulates iron absorption.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the route to the blood for absorbed iron?", opts: ["Lacteals → lymph", "Capillaries → portal vein", "Directly to bones", "Thoracic duct"], a: 1, exp: "Iron travels via capillaries to the portal vein.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the final digestive form of Calcium for absorption?", opts: ["Calcium carbonate", "Ca2+", "Bound to micelles", "Calcium citrate"], a: 1, exp: "Calcium is absorbed as the Ca2+ ion.[cite: 85, 86]" },
+        { type: "MCQ", q: "Active transport of Calcium in the duodenum is dependent on which vitamin?", opts: ["Vitamin C", "Vitamin B12", "Vitamin D", "Vitamin K"], a: 2, exp: "Active calcium absorption in the duodenum is Vitamin D-dependent.[cite: 85, 86]" },
+        { type: "MCQ", q: "While Calcium is actively absorbed in the duodenum, how is it absorbed in the rest of the small intestine?", opts: ["Active transport via DMT1", "Passive absorption", "Endocytosis", "Facilitated diffusion"], a: 1, exp: "It can be passively absorbed throughout all of the small intestine.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the route to the blood for Calcium?", opts: ["Capillaries → portal vein", "Lacteals → lymph", "Directly into arteries", "Thoracic duct"], a: 0, exp: "Calcium travels via capillaries to the portal vein.[cite: 85, 86]" },
+        { type: "FR", q: "What is the final digestive form of Water?", aText: "H2O", exp: "Water is absorbed as H2O.[cite: 85, 86]" },
+        { type: "MCQ", q: "Approximately how much water enters the GI tract daily, and how much is absorbed in the small intestine?", opts: ["~5 L enters; ~3 L absorbed", "~9 L enters; ~7 L absorbed", "~12 L enters; ~10 L absorbed", "~2 L enters; ~1 L absorbed"], a: 1, exp: "~9 L/day enters the GI tract; ~7 L is absorbed in the small intestine.[cite: 85, 86]" },
+        { type: "MCQ", q: "By what mechanism is water absorbed in the GI tract?", opts: ["Active transport", "Facilitated diffusion", "Osmosis following solute absorption", "Endocytosis"], a: 2, exp: "Water is absorbed via osmosis following solute absorption.[cite: 85, 86]" },
+        { type: "MCQ", q: "What is the route to the blood for absorbed water?", opts: ["Capillaries → portal vein", "Lacteals → lymph", "Thoracic duct", "Jugular vein"], a: 0, exp: "Water travels via capillaries to the portal vein.[cite: 85, 86]" },
+        { type: "MCQ", q: "Which of the following nutrients relies on the hormone hepcidin for regulation?", opts: ["Calcium", "Vitamin B12", "Iron (Fe2+)", "Water"], a: 2, exp: "Iron absorption via DMT1 is regulated by hepcidin.[cite: 85, 86]" },
+        { type: "MCQ", q: "Which two nutrients listed in the table require active transport via a specific transporter ending in '1' (SGLT1, PepT1, DMT1)?", opts: ["Glucose and Iron", "Fructose and Water", "Fat-soluble vitamins and B12", "Long-chain fats and Calcium"], a: 0, exp: "Glucose uses SGLT1, Peptides use PepT1, and Iron uses DMT1.[cite: 85, 86]" }
+    ];
+
+    const milestones = [
+        { icon: "🦖", q: "What were prehistoric sleepovers called?", a: "Dino-SNORES." },
+        { icon: "🐝", q: "What's a bee's favorite musical?", a: "Stinging in the Rain." },
+        { icon: "👑", q: "What kind of cow wears a crown?", a: "A dairy queen." },
+        { icon: "🐊", q: "Which reptile always knows what time it is?", a: "A grandfather croc." },
+        { icon: "🦇", q: "What animal sewed the first American flag?", a: "Bat-sy Ross." },
+        { icon: "🐜", q: "What's an aardvark's favorite pizza topping?", a: "Ant-chovies." },
+        { icon: "🦑", q: "What makes a jellyfish laugh?", a: "Ten tickles." },
+        { icon: "🐕", q: "What are a dog's favorite pizza toppings?", a: "Pupperoni and muttzarella." },
+        { icon: "🐻", q: "What bear likes to go out in the rain?", a: "Drizzly bears." },
+        { icon: "🎨", q: "What bird is the greatest artist?", a: "Leonardo da Finchy." },
+        { icon: "🦉", q: "How many mice can an owl eat?", a: "OWL of them!" },
+        { icon: "🐢", q: "How does a turtle call its friends?", a: "With a shell phone." },
+        { icon: "👻", q: "How do ghosts greet each other on New Year's Day?", a: "Happy Boo Year!" },
+        { icon: "🐬", q: "How do dolphins make important decisions?", a: "They flipper a coin." },
+        { icon: "🦃", q: "What do turkeys like to eat for dessert?", a: "Apple Gobbler." }
+    ];
+
+    let shuffledQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let correctAnswersSinceLastJoke = 0;
+    let milestoneIndex = 0;
+
+    function shuffleArray(array) {
+        let curId = array.length;
+        while (0 !== curId) {
+            let randId = Math.floor(Math.random() * curId);
+            curId -= 1;
+            let tmp = array[curId];
+            array[curId] = array[randId];
+            array[randId] = tmp;
+        }
+        return array;
+    }
+
+    function startGame() {
+        shuffledQuestions = shuffleArray([...questionsDb]);
+        document.getElementById('q-total').innerText = shuffledQuestions.length;
+        currentIndex = 0;
+        score = 0;
+        document.getElementById('screen-start').classList.add('hidden');
+        document.getElementById('score-tracker').classList.remove('hidden');
+        document.getElementById('screen-game').classList.remove('hidden');
+        loadQuestion();
+    }
+
+    function updateScore() {
+        document.getElementById('s-val').innerText = score;
+    }
+
+    function loadQuestion() {
+        const feedbackArea = document.getElementById('feedback-area');
+        feedbackArea.style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+        document.getElementById('self-grade-box').classList.add('hidden');
+        document.getElementById('options-container').innerHTML = '';
+        document.getElementById('fr-input').value = '';
+
+        const qData = shuffledQuestions[currentIndex];
+        document.getElementById('q-counter').innerText = currentIndex + 1;
+        document.getElementById('question-text').innerHTML = qData.q;
+
+        if (qData.type === 'MCQ') {
+            document.getElementById('options-container').style.display = 'flex';
+            document.getElementById('fr-container').classList.add('hidden');
+            
+            qData.opts.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = optText;
+                btn.onclick = () => submitMCQAnswer(index, btn);
+                document.getElementById('options-container').appendChild(btn);
+            });
+        } else {
+            document.getElementById('options-container').style.display = 'none';
+            document.getElementById('fr-container').classList.remove('hidden');
+            document.getElementById('fr-submit').classList.remove('hidden');
+            document.getElementById('fr-input').disabled = false;
+            document.getElementById('fr-input').focus();
+        }
+    }
+
+    function submitMCQAnswer(selectedIndex, btnElement) {
+        const qData = shuffledQuestions[currentIndex];
+        const isCorrect = (selectedIndex === qData.a);
+
+        const allBtns = document.querySelectorAll('.option-btn');
+        allBtns.forEach((btn, index) => {
+            btn.disabled = true;
+            if (index === qData.a) btn.classList.add('correct');
+        });
+
+        const feedbackArea = document.getElementById('feedback-area');
+        feedbackArea.style.display = 'block';
+
+        if (isCorrect) {
+            score++;
+            correctAnswersSinceLastJoke++;
+            updateScore();
+            btnElement.classList.add('correct');
+            document.getElementById('feedback-title').innerText = "Correct! (+1)";
+            feedbackArea.className = "show-correct";
+        } else {
+            btnElement.classList.add('wrong');
+            document.getElementById('feedback-title').innerText = "Incorrect.";
+            feedbackArea.className = "show-wrong";
+        }
+
+        document.getElementById('feedback-text').innerHTML = qData.exp;
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    function showFRRubric() {
+        const inputVal = document.getElementById('fr-input').value.trim();
+        if(inputVal === "") {
+            alert("Please type an answer before checking!");
+            return;
+        }
+
+        const qData = shuffledQuestions[currentIndex];
+        document.getElementById('fr-input').disabled = true;
+        document.getElementById('fr-submit').classList.add('hidden');
+
+        const feedbackArea = document.getElementById('feedback-area');
+        feedbackArea.style.display = 'block';
+        feedbackArea.className = "show-neutral";
+        
+        document.getElementById('feedback-title').innerText = "Review Answer Key:";
+        document.getElementById('feedback-text').innerHTML = `<strong>Correct Answer:</strong> ${qData.aText}<br><br><em>Context:</em> ${qData.exp}`;
+        
+        document.getElementById('self-grade-box').classList.remove('hidden');
+    }
+
+    function selfGrade(isCorrect) {
+        document.getElementById('self-grade-box').classList.add('hidden');
+        const feedbackArea = document.getElementById('feedback-area');
+
+        if (isCorrect) {
+            score++;
+            correctAnswersSinceLastJoke++;
+            updateScore();
+            feedbackArea.className = "show-correct";
+            document.getElementById('feedback-title').innerText = "Marked Correct! (+1)";
+        } else {
+            feedbackArea.className = "show-wrong";
+            document.getElementById('feedback-title').innerText = "Marked Incorrect. (0)";
+        }
+
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    function nextQuestion() {
+        if (correctAnswersSinceLastJoke >= 5 && currentIndex < shuffledQuestions.length - 1) {
+            correctAnswersSinceLastJoke = 0; 
+            showMilestone();
+            return; 
+        }
+        proceedToNext();
+    }
+
+    function proceedToNext() {
+        currentIndex++;
+        if (currentIndex < shuffledQuestions.length) {
+            loadQuestion();
+        } else {
+            endTest();
+        }
+    }
+
+    function showMilestone() {
+        const overlay = document.getElementById('milestone-overlay');
+        const m = milestones[milestoneIndex % milestones.length];
+        
+        document.getElementById('milestone-icon').innerText = m.icon;
+        document.getElementById('milestone-q').innerText = m.q;
+        document.getElementById('milestone-a').innerText = m.a;
+        
+        overlay.classList.add('active');
+        milestoneIndex++;
+    }
+
+    function closeMilestone() {
+        document.getElementById('milestone-overlay').classList.remove('active');
+        proceedToNext();
+    }
+
+    function endTest() {
+        document.getElementById('quiz-container').classList.add('hidden');
+        document.getElementById('score-tracker').classList.add('hidden');
+        document.getElementById('screen-results').classList.remove('hidden');
+
+        let answeredCount = currentIndex;
+        if(document.getElementById('next-btn').style.display === 'block') {
+            answeredCount = currentIndex + 1;
+        }
+        if (answeredCount > shuffledQuestions.length) answeredCount = shuffledQuestions.length;
+
+        let percentage = answeredCount === 0 ? 0 : Math.round((score / answeredCount) * 100);
+        document.getElementById('final-score-display').innerText = `${score} / ${answeredCount} (${percentage}%)`;
+        
+        let msg = "";
+        if (percentage >= 90) msg = "Incredible work! You've mastered the intricacies of GI hormones and nutrient absorption.";
+        else if (percentage >= 70) msg = "Great job! You navigated this intense 100-question gauntlet very well.";
+        else msg = "Good practice! Keep reviewing the transport mechanisms and hormone triggers.";
+        
+        document.getElementById('final-message').innerText = msg;
+    }
+
+</script>
+
+</body>
+</html>
